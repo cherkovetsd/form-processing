@@ -1,0 +1,61 @@
+﻿@model Data.Models.FormFieldsForUpdatePage
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>FormRecord</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form action="/UserPages/Edit/@Model.Id" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <label>; Оригинальное значение: @Model.Name </label>
+                <input class="form-control" type="text" id="Name" name="Name"/>
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Group" class="control-label"></label>
+                <label>; Оригинальное значение: @Model.Group </label>
+                <input class="form-control" type="text" id="Group" name="Group" />
+                <span asp-validation-for="Group" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Topic" class="control-label"></label>
+                <label>; Оригинальное значение: @Model.Topic </label>
+                <input class="form-control" type="text" id="Topic" name="Topic" />
+                <span asp-validation-for="Topic" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Company" class="control-label"></label>
+                <label>; Оригинальное значение: @Model.Company </label>
+                <input class="form-control" type="text" id="Company" name="Company" />
+                <span asp-validation-for="Company" class="text-danger"></span>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                     @Html.DisplayNameFor(model => model.HasConsultant)
+                </label>
+                <input class="form-check-input" asp-for="HasConsultant" />
+            </div>
+            <div class="form-group">
+                <input type="hidden" asp-for="Timestamp" class="form-control" />
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Save" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

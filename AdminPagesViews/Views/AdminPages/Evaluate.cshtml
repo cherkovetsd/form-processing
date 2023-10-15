@@ -1,0 +1,63 @@
+﻿@model Data.Models.FormFieldsForUpdatePage
+@{
+    ViewData["Title"] = "Details";
+}
+
+<h1>Details</h1>
+
+<div>
+    <h4>Movie</h4>
+    <hr />
+    <dl class="row">
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Name)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Name)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Group)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Group)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Topic)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.Topic)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.Company)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayNameFor(model => model.Company)
+        </dd>
+        <dt class="col-sm-2">
+            @Html.DisplayNameFor(model => model.HasConsultant)
+        </dt>
+        <dd class="col-sm-10">
+            @Html.DisplayFor(model => model.HasConsultant)
+        </dd>
+    </dl>
+</div>
+<div>
+    <form action="/AdminPages/Evaluate/@ViewData["id"]" method="post">
+        <input type="hidden" type="datetime" name="timestamp" value=@Model.Timestamp />
+        <input type="hidden" type="text" name="state" value="Approved" />
+        <div class="form-group">
+            <input type="submit" value="Approve" class="btn btn-primary" />
+        </div>
+    </form>
+    <form action="/AdminPages/Evaluate/@ViewData["id"]" method="post">
+        <input type="hidden" type="datetime" name="timestamp" value=@Model.Timestamp />
+        <input type="hidden" type="text" name="timestamp" value="Rejected" />
+        <div class="form-group">
+            <input type="submit" value="Reject" class="btn btn-primary" />
+        </div>
+    </form>
+</div>
+<div>
+    
+    <a asp-action="Index">Back to List</a>
+</div>
