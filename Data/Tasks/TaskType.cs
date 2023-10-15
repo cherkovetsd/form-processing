@@ -10,6 +10,7 @@
         ErrorPage,
         FormCreate,
         FormUpdate,
-        FormStateChange
+        FormStateChange,
+        EvaluationStatusUpdate
     }
 }

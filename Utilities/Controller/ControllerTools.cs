@@ -6,9 +6,9 @@ namespace Utilities.Controller
 {
     public static class ControllerTools
     {
-        private static async Task<string> CompleteTask(EventBasedQueuedTask task, ITaskQueue queueManager)
+        private static async Task<string> CompleteTask(EventBasedQueuedTask task, ITaskQueue queue)
         {
-            var taskAccepted = await queueManager.Push(task);
+            var taskAccepted = await queue.Push(task);
 
             if (taskAccepted)
             {
@@ -21,9 +21,10 @@ namespace Utilities.Controller
             return "error";
         }
 
-        public static async Task<string> CompletePageAction(EventBasedQueuedTask task, ITaskQueue manager, Func<Task<string>> fallback, Func<Task<String>> error)
+        public static async Task<string> CompletePageAction(EventBasedQueuedTask task, ITaskQueue queue,
+            Func<Task<string>> fallback, Func<Task<String>> error)
         {
-            var result = await CompleteTask(task, manager);
+            var result = await CompleteTask(task, queue);
             if (result == "error")
             {
                 result = await fallback();
@@ -35,9 +36,10 @@ namespace Utilities.Controller
             return result;
         }
 
-        public static async Task<IActionResult> CompleteFormAction(EventBasedQueuedTask task, ITaskQueue manager, Func<Task<string>> fallback, Func<Task<IActionResult>> index, Func<string, Task<IActionResult>> error)
+        public static async Task<IActionResult> CompleteFormAction(EventBasedQueuedTask task, ITaskQueue queue,
+            Func<Task<string>> fallback, Func<Task<IActionResult>> index, Func<string, Task<IActionResult>> error)
         {
-            var result = await CompleteTask(task, manager);
+            var result = await CompleteTask(task, queue);
             if (result == "error")
             {
                 result = await fallback();
@@ -47,6 +49,16 @@ namespace Utilities.Controller
                 return await index();
             }
             return await error(result);
+        }
+
+        public static async Task CompleteFireAndForgetAction(EventBasedQueuedTask task, ITaskQueue queue,
+            Func<Task> fallback)
+        {
+            var result = await CompleteTask(task, queue);
+            if (result == "error")
+            {
+                await fallback();
+            }
         }
     }
 }

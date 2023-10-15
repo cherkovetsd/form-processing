@@ -23,8 +23,8 @@ builder.Services.Configure<RecordTaskQueueOptions>(
 builder.Services.Configure<UpdateControllerOptions>(
     builder.Configuration.GetSection(UpdateControllerOptions.Position));
 
-builder.Services.Configure<EvaluationStateTransitionOptions>(
-    builder.Configuration.GetSection(EvaluationStateTransitionOptions.Position));
+builder.Services.Configure<FormStateServiceOptions>(
+    builder.Configuration.GetSection(FormStateServiceOptions.Position));
 
 builder.Services.AddSingleton<UpdateController>();
 

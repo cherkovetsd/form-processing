@@ -12,7 +12,7 @@ namespace AdminSideServices.Service
         private readonly IDbContextFactory<Context> _formContextFactory;
         private readonly FormState[] _statesAllowedForEvaluate;
 
-        public FormStateService(IDbContextFactory<Context> formContextFactory, IOptions<EvaluationStateTransitionOptions> options)
+        public FormStateService(IDbContextFactory<Context> formContextFactory, IOptions<FormStateServiceOptions> options)
         {
             _formContextFactory = formContextFactory;
             _statesAllowedForEvaluate = options.Value.StatesAllowedForEvaluation;
@@ -23,10 +23,11 @@ namespace AdminSideServices.Service
             var id = request.Id;
             var createDate = request.CreateDate;
             var state = request.State;
-
-            await using var context = await _formContextFactory.CreateDbContextAsync();
+            
             try
             {
+                await using var context = await _formContextFactory.CreateDbContextAsync();
+                
                 var result = await context.Forms
                     .Where(f => f.Id == id && f.LastUpdated < createDate &&
                                 _statesAllowedForEvaluate.Contains(f.State))
@@ -51,6 +52,27 @@ namespace AdminSideServices.Service
             {
                 return "error";
             }
+        }
+
+        public async Task<string> UpdateEvaluationState(EvaluationStateUpdateRequest request)
+        {
+            var evaluationTime = request.EvaluationTime;
+            
+            try
+            {
+                await using var context = await _formContextFactory.CreateDbContextAsync();
+                await context.Forms.Where(f =>
+                    f.State == FormState.UnderEvaluation && f.LastUpdated < (DateTime.UtcNow - evaluationTime)).ExecuteUpdateAsync(
+                    s =>
+                        s.SetProperty(f => f.State, f => FormState.AwaitingApproval)
+                            .SetProperty(f => f.LastUpdated, DateTime.UtcNow));
+                return "success";
+            }
+            catch (Exception)
+            {
+                return "error";
+            }
+            
         }
     }
 }

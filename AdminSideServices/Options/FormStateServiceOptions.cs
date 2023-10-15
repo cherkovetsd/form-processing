@@ -2,9 +2,9 @@
 
 namespace AdminSideServices.Options
 {
-    public class EvaluationStateTransitionOptions
+    public class FormStateServiceOptions
     {
-        public const string Position = "StatesAllowedForEvaluation";
+        public const string Position = "FormStateService";
 
         public FormState[] StatesAllowedForEvaluation { get; set; } = Array.Empty<FormState>();
     }
