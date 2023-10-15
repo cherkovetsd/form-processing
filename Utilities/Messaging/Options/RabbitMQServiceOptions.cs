@@ -16,5 +16,7 @@
         public Address? BrokerAddress { get; set; }
 
         public TimeSpan? ContinuationTimeout { get; set; }
+
+        public int? UpdateRateTicks { get; set; }
     }
 }

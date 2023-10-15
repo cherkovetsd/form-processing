@@ -20,7 +20,7 @@ builder.Services.Configure<UpdateControllerOptions>(
 builder.Services.Configure<UpdateStateTransitionOptions>(
     builder.Configuration.GetSection(UpdateStateTransitionOptions.Position));
 
-builder.Services.AddSingleton<IUpdateController, UpdateController>();
+builder.Services.AddSingleton<UpdateController>();
 
 builder.Services.AddSingleton<IUserPagesService, UserPagesService>();
 

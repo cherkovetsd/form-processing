@@ -2,59 +2,43 @@
 {
     using Microsoft.Extensions.Options;
     using Task = Task;
-    public class UpdateController : IUpdateController
+    public class UpdateController
     {
-        private readonly List<IUpdateable> _updateables = new();
-        bool _isRunning = false;
-        private readonly int _updateInterval;
-
-        public UpdateController(IOptions<UpdateControllerOptions> options)
+        private class UpdateableStatus
         {
-            _updateInterval = options.Value.UpdateInterval;
-        }
-
-        public void Add(IUpdateable updateable)
-        {
-            _updateables.Add(updateable);
-        }
-
-        public void Remove(IUpdateable updateable)
-        {
-            _updateables.Remove(updateable);
+            public bool IsRunning { get; set; } = true;
         }
         
-        public void Drop()
+        private readonly Dictionary<IUpdateable, UpdateableStatus> _statuses = new();
+
+        public void Add(IUpdateable updateable, int delay)
         {
-            _updateables.Clear();
+            var status = new UpdateableStatus();
+            _statuses[updateable] = status;
+
+            _ = StartUpdating(updateable, delay, status);
         }
 
-        private void Update()
+        public void Stop(IUpdateable updateable)
         {
-            foreach (var updateable in _updateables)
-            {
-                updateable.Update();
-            }
+            _statuses[updateable].IsRunning = false;
         }
-
-        public async void Start()
-        {
-            _isRunning = true;
-
-            while (_isRunning)
-            {
-                await Task.Delay(_updateInterval);
-                Update();
-            }
-        }
-
-        public void Stop()
-        {
-            _isRunning = false;
-        }
-
+        
         public void Dispose()
         {
-            Stop();
+            foreach (var status in _statuses)
+            {
+                status.Value.IsRunning = false;
+            }
+        }
+        
+        private static async Task StartUpdating(IUpdateable updateable, int delay, UpdateableStatus status)
+        {
+            while (status.IsRunning)
+            {
+                await Task.Delay(delay);
+                updateable.Update();
+            }
         }
     }
 }

@@ -26,7 +26,7 @@ builder.Services.Configure<UpdateControllerOptions>(
 builder.Services.Configure<EvaluationStateTransitionOptions>(
     builder.Configuration.GetSection(EvaluationStateTransitionOptions.Position));
 
-builder.Services.AddSingleton<IUpdateController, UpdateController>();
+builder.Services.AddSingleton<UpdateController>();
 
 builder.Services.AddSingleton<IControllerQueueFactory, RabbitMQQueueFactory>();
 

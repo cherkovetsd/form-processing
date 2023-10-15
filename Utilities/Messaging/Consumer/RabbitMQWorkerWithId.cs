@@ -7,6 +7,7 @@ using System.Text.Json;
 using Utilities.Messaging.Consumer.Options;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Utilities.Messaging.Options;
 using Utilities.Worker;
 
 namespace Utilities.Messaging.Consumer
@@ -14,10 +15,13 @@ namespace Utilities.Messaging.Consumer
     public class RabbitMQWorkerWithId : BackgroundService, IDisposable
     {
         private Worker? _worker;
-        private readonly IUpdateController _updateController;
-        private readonly RabbitMQWorkerOptions _options;
+        private readonly UpdateController _updateController;
+        private readonly RabbitMQServiceOptions _options;
         private readonly IEncodedTaskHandler _taskHandler;
-        public RabbitMQWorkerWithId(IOptions<RabbitMQWorkerOptions> options, IUpdateController updateController, IEncodedTaskHandler taskHandler)
+        private readonly IOptions<UpdateControllerOptions> _updateOptions;
+        
+        public RabbitMQWorkerWithId(IOptions<RabbitMQServiceOptions> options, UpdateController updateController,
+            IEncodedTaskHandler taskHandler)
         {
             _options = options.Value;
             _taskHandler = taskHandler;
@@ -26,10 +30,8 @@ namespace Utilities.Messaging.Consumer
 
         public override void Dispose()
         {
-            _updateController.Stop();
-            if (_worker != null ) 
+            if (_worker != null) 
             {
-                _updateController.Remove(_worker);
                 _worker.Dispose();
             }
         }
@@ -44,9 +46,9 @@ namespace Utilities.Messaging.Consumer
                         _options.OutcomingQueueName ?? throw new ArgumentException(),
                         _options.IncomingQueueName ?? throw new ArgumentException(),
                         _options.ContinuationTimeout ?? throw new ArgumentException(),
-                        _taskHandler);
-                _updateController.Add(_worker);
-                _updateController.Start();
+                        _options.UpdateRateTicks ?? throw new ArgumentException(),
+                        _taskHandler,
+                        _updateController);
             }
             catch (Exception)
             {
@@ -72,16 +74,22 @@ namespace Utilities.Messaging.Consumer
             private readonly TimeSpan _continuationTimeout;
             private AsyncEventingBasicConsumer? _consumer = null;
             private readonly IEncodedTaskHandler _taskHandler;
-
+            private readonly UpdateController _updateController;
+            private bool _connectingInProcess = false;
+            
             private bool _isBlocked = false;
             private readonly ConnectionFactory _factory;
             private bool _isActive = false;
 
-            public Worker(string? hostName, int? port, Uri? uri, string outcomingQueueName, string incomingQueueName, TimeSpan continuationTimeout, IEncodedTaskHandler taskHandler)
+            public Worker(string? hostName, int? port, Uri? uri, string outcomingQueueName, string incomingQueueName,
+                TimeSpan continuationTimeout, int updateRateTicks, IEncodedTaskHandler taskHandler,
+                UpdateController updateController)
             {
-                _factory = new ConnectionFactory();
-                _factory.DispatchConsumersAsync = true;
-                _factory.ConsumerDispatchConcurrency = ConsumerDispatchConcurrency;
+                _factory = new ConnectionFactory
+                {
+                    DispatchConsumersAsync = true,
+                    ConsumerDispatchConcurrency = ConsumerDispatchConcurrency
+                };
                 if (hostName != null)
                 {
                     _factory.HostName = hostName;
@@ -103,7 +111,10 @@ namespace Utilities.Messaging.Consumer
                 _incomingQueueName = incomingQueueName;
                 _continuationTimeout = continuationTimeout;
                 _taskHandler = taskHandler;
+                _updateController = updateController;
                 _ = AttemptConnecting();
+                
+                _updateController.Add(this, updateRateTicks);
             }
 
             private void OnConnectionBlocked(object? sender, ConnectionBlockedEventArgs args)
@@ -128,6 +139,9 @@ namespace Utilities.Messaging.Consumer
 
             public void Dispose()
             {
+                _isActive = false;
+                _updateController.Stop(this);
+                
                 if (_connection != null)
                 {
                     _incomingQueueChannel?.Abort();
@@ -137,7 +151,6 @@ namespace Utilities.Messaging.Consumer
                     _connection.Abort();
                     _connection.Dispose();
                 }
-                _isActive = false;
             }
 
             private void OnOutcomingQueueChannelShutdown(object? sender, ShutdownEventArgs? args)
@@ -233,15 +246,30 @@ namespace Utilities.Messaging.Consumer
 
             private bool AttemptConnecting()
             {
-                if (_isActive || ConnectToBroker())
+                if (_connectingInProcess)
                 {
-                    if ((_outcomingQueueEstablished || ConnectToOutcomingQueue()) && (_incomingQueueEstablished || ConnectToIncomingQueue()))
+                    return _isAvailable;
+                }
+                _connectingInProcess = true;
+
+                try
+                {
+                    if (_isActive || ConnectToBroker())
                     {
-                        _outcomingQueueEstablished = true;
-                        _incomingQueueEstablished = true;
-                        _isAvailable = true;
-                        return true;
+                        if ((_outcomingQueueEstablished || ConnectToOutcomingQueue()) &&
+                            (_incomingQueueEstablished || ConnectToIncomingQueue()))
+                        {
+                            _outcomingQueueEstablished = true;
+                            _incomingQueueEstablished = true;
+                            _isAvailable = true;
+                            return true;
+                        }
                     }
+                }
+                catch (Exception) {}
+                finally
+                {
+                    _connectingInProcess = false;
                 }
                 return false;
             }

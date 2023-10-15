@@ -10,7 +10,7 @@ namespace Utilities.Messaging.Publisher.Factory
         private readonly ITaskQueue _pageTaskQueue;
         private readonly ITaskQueue _recordTaskQueue;
 
-        public RabbitMQQueueFactory(IOptions<PageTaskQueueOptions> pageQueueOptions, IOptions<RecordTaskQueueOptions> recordQueueOptions, IUpdateController updateController)
+        public RabbitMQQueueFactory(IOptions<PageTaskQueueOptions> pageQueueOptions, IOptions<RecordTaskQueueOptions> recordQueueOptions, UpdateController updateController)
         {
             _pageTaskQueue = new RabbitMQTaskQueueWithId(pageQueueOptions.Value, updateController);
             _recordTaskQueue = new RabbitMQTaskQueueWithId(recordQueueOptions.Value, updateController);

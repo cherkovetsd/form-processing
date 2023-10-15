@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
+using Microsoft.Extensions.Options;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using RabbitMQ.Client.Exceptions;
@@ -13,9 +14,7 @@ namespace Utilities.Messaging.Publisher
     public class RabbitMQTaskQueueWithId : ITaskQueue
     {
         private readonly Queue _queue;
-        private readonly IUpdateController _updateController;
-
-        public RabbitMQTaskQueueWithId(RabbitMQServiceOptions options, IUpdateController updateController)
+        public RabbitMQTaskQueueWithId(RabbitMQServiceOptions options, UpdateController updateController)
         {
             try
             {
@@ -25,10 +24,9 @@ namespace Utilities.Messaging.Publisher
                     options.BrokerAddress.Uri,
                     options.OutcomingQueueName ?? throw new ArgumentException(),
                     options.IncomingQueueName ?? throw new ArgumentException(),
-                    options.ContinuationTimeout ?? throw new ArgumentException());
-
-                _updateController = updateController;
-                _updateController.Add(_queue);
+                    options.ContinuationTimeout ?? throw new ArgumentException(),
+                    options.UpdateRateTicks ?? throw new ArgumentException(),
+                    updateController);
             }
             catch (Exception)
             {
@@ -38,8 +36,6 @@ namespace Utilities.Messaging.Publisher
         }
         public void Dispose()
         {
-            _updateController.Stop();
-            _updateController.Remove(_queue);
             _queue.Dispose();
         }
 
@@ -62,12 +58,14 @@ namespace Utilities.Messaging.Publisher
             private readonly Dictionary<Guid, TaskCompletionSource<string>> _queueResponses = new();
             private readonly TimeSpan _continuationTimeout;
             private EventingBasicConsumer? _consumer = null;
-
+            private readonly UpdateController _updateController;
             private bool _isBlocked = false;
             private readonly ConnectionFactory _factory;
             private bool _isActive = false;
+            private bool _connectingInProcess = false;
 
-            public Queue(string? hostName, int? port, Uri? uri, string outcomingQueueName, string incomingQueueName, TimeSpan continuationTimeout)
+            public Queue(string? hostName, int? port, Uri? uri, string outcomingQueueName, string incomingQueueName,
+                TimeSpan continuationTimeout, int updateRateTicks, UpdateController updateController)
             {
                 _factory = new ConnectionFactory();
                 if (hostName != null)
@@ -91,6 +89,9 @@ namespace Utilities.Messaging.Publisher
                 _incomingQueueName = incomingQueueName ?? throw new ArgumentException();
                 _continuationTimeout = continuationTimeout;
                 _ = AttemptConnecting();
+
+                _updateController = updateController;
+                _updateController.Add(this, updateRateTicks);
             }
 
             private void OnConnectionBlocked(object? sender, ConnectionBlockedEventArgs args)
@@ -116,6 +117,9 @@ namespace Utilities.Messaging.Publisher
 
             public void Dispose()
             {
+                _isActive = false;
+                _updateController.Stop(this);
+                
                 if (_connection != null)
                 {
                     _incomingQueueChannel.QueueDeleteNoWait(_incomingQueueName);
@@ -128,7 +132,6 @@ namespace Utilities.Messaging.Publisher
                     _connection.Dispose();
                 }
                 CancelQueue();
-                _isActive = false;
             }
 
             private void OnOutcomingQueueChannelShutdown(object? sender, ShutdownEventArgs? args)
@@ -231,15 +234,30 @@ namespace Utilities.Messaging.Publisher
 
             private bool AttemptConnecting()
             {
-                if (_isActive || ConnectToBroker())
+                if (_connectingInProcess)
                 {
-                    if ((_outcomingQueueEstablished || ConnectToOutcomingQueue()) && (_incomingQueueEstablished || ConnectToIncomingQueue()))
+                    return _isAvailable;
+                }
+                _connectingInProcess = true;
+
+                try
+                {
+                    if (_isActive || ConnectToBroker())
                     {
-                        _outcomingQueueEstablished = true;
-                        _incomingQueueEstablished = true;
-                        _isAvailable = true;
-                        return true;
+                        if ((_outcomingQueueEstablished || ConnectToOutcomingQueue()) &&
+                            (_incomingQueueEstablished || ConnectToIncomingQueue()))
+                        {
+                            _outcomingQueueEstablished = true;
+                            _incomingQueueEstablished = true;
+                            _isAvailable = true;
+                            return true;
+                        }
                     }
+                }
+                catch (Exception)  {}
+                finally
+                {
+                    _connectingInProcess = false;
                 }
                 return false;
             }
