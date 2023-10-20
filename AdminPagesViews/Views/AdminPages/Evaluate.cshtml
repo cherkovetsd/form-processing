@@ -1,6 +1,7 @@
-﻿@model Data.Models.FormFieldsForUpdatePage
+﻿@using System.Globalization
+@model Data.Models.FormFieldsForUpdatePage
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = "Evaluate";
 }
 
 <h1>Details</h1>
@@ -42,22 +43,21 @@
     </dl>
 </div>
 <div>
-    <form action="/AdminPages/Evaluate/@ViewData["id"]" method="post">
-        <input type="hidden" type="datetime" name="timestamp" value=@Model.Timestamp />
-        <input type="hidden" type="text" name="state" value="Approved" />
+    <form action="/AdminPages/Evaluate/@Model.Id" method="post">
+        <input type="hidden" name="timestamp" value="@Model.Timestamp" />
+        <input type="hidden" name="state" value="Approved" />
         <div class="form-group">
             <input type="submit" value="Approve" class="btn btn-primary" />
         </div>
     </form>
-    <form action="/AdminPages/Evaluate/@ViewData["id"]" method="post">
-        <input type="hidden" type="datetime" name="timestamp" value=@Model.Timestamp />
-        <input type="hidden" type="text" name="timestamp" value="Rejected" />
+    <form action="/AdminPages/Evaluate/@Model.Id" method="post">
+        <input type="hidden" name="timestamp" value="@Model.Timestamp" />
+        <input type="hidden" name="state" value="Rejected" />
         <div class="form-group">
             <input type="submit" value="Reject" class="btn btn-primary" />
         </div>
     </form>
 </div>
 <div>
-    
     <a asp-action="Index">Back to List</a>
 </div>

@@ -31,6 +31,10 @@ builder.Services.Configure<RabbitMQWorkerOptions>(
 
 builder.Services.AddHostedService<RabbitMQWorkerWithId>();
 
+builder.Services.AddSingleton<UpdateController>();
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var host = builder.Build();
 
 host.Run();

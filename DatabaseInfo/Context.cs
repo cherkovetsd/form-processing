@@ -32,7 +32,7 @@ namespace DatabaseInfo
                 .WithMany(e => e.Forms)
                 .HasForeignKey(e => e.Name)
                 .HasPrincipalKey(e => e.Name)
-                .IsRequired(true);
+                .IsRequired(false); // EF Core всё равно генерирует foreign key constraint, его нужно удалять вручную!!!
 
             modelBuilder.Entity<Student>()
                 .HasKey(c => c.Name);

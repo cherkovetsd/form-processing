@@ -4,7 +4,7 @@ namespace AdminSideServices.Options
 {
     public class FormStateServiceOptions
     {
-        public const string Position = "FormStateService";
+        public const string Position = "StatesAllowedForEvaluation";
 
         public FormState[] StatesAllowedForEvaluation { get; set; } = Array.Empty<FormState>();
     }

@@ -24,6 +24,12 @@
             <th>
                 @Html.DisplayNameFor(model => model.Fields.HasConsultant)
             </th>
+            <th>
+                @Html.DisplayNameFor(model => model.State)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Description)
+            </th>
             <th></th>
         </tr>
     </thead>
@@ -44,6 +50,12 @@
             </td>
             <td>
                 @Html.DisplayFor(modelItem => item.Fields.HasConsultant)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.State)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Description)
             </td>
             <td>
                 <a href="/AdminPages/Evaluate/@item.Id">Рассмотреть</a>

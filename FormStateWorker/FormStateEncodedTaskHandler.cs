@@ -29,6 +29,9 @@ namespace FormStateWorker
                 {
                     case TaskType.FormStateChange:
                         return await HandleJsonRequest<ChangeStateRequest>(message, errorMessage, _service.SetState);
+                    case TaskType.EvaluationStatusUpdate:
+                        return await HandleJsonRequest<EvaluationStateUpdateRequest>(message, errorMessage,
+                            _service.UpdateEvaluationState);
                     default:
                         return errorMessage;
                 }

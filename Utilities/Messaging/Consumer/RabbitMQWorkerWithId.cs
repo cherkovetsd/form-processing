@@ -18,9 +18,8 @@ namespace Utilities.Messaging.Consumer
         private readonly UpdateController _updateController;
         private readonly RabbitMQServiceOptions _options;
         private readonly IEncodedTaskHandler _taskHandler;
-        private readonly IOptions<UpdateControllerOptions> _updateOptions;
         
-        public RabbitMQWorkerWithId(IOptions<RabbitMQServiceOptions> options, UpdateController updateController,
+        public RabbitMQWorkerWithId(IOptions<RabbitMQWorkerOptions> options, UpdateController updateController,
             IEncodedTaskHandler taskHandler)
         {
             _options = options.Value;
@@ -30,10 +29,8 @@ namespace Utilities.Messaging.Consumer
 
         public override void Dispose()
         {
-            if (_worker != null) 
-            {
-                _worker.Dispose();
-            }
+            _worker?.Dispose();
+            base.Dispose();
         }
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)

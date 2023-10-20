@@ -8,16 +8,20 @@ namespace Utilities.Controller
     {
         private static async Task<string> CompleteTask(EventBasedQueuedTask task, ITaskQueue queue)
         {
-            var taskAccepted = await queue.Push(task);
-
-            if (taskAccepted)
+            try
             {
-                await task.TaskResult;
-                if (task.TaskResult.IsCompleted)
+                var taskAccepted = await queue.Push(task);
+
+                if (taskAccepted)
                 {
-                    return task.TaskResult.Result;
+                    await task.TaskResult;
+                    if (task.TaskResult.IsCompleted)
+                    {
+                        return task.TaskResult.Result;
+                    }
                 }
             }
+            catch (Exception) {} // Отмена task вызывает System.Threading.Tasks.TaskCanceledException
             return "error";
         }
 

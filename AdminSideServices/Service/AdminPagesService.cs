@@ -31,7 +31,7 @@ namespace AdminSideServices.Service
             if (form != null)
             {
                 var result = await context.Forms.Where(f => f.Id == id && f.LastUpdated < timestamp).ExecuteUpdateAsync(
-                    setters => setters.SetProperty(f => f.State, f => FormState.AwaitingApproval));
+                    setters => setters.SetProperty(f => f.State, f => FormState.UnderEvaluation));
 
                 if (result != 0) 
                 {

@@ -11,7 +11,7 @@ using Utilities.Updating;
 
 namespace Utilities.Messaging.Publisher
 {
-    public class RabbitMQTaskQueueWithId : ITaskQueue
+    public class RabbitMQTaskQueueWithId : ITaskQueue, IDisposable
     {
         private readonly Queue _queue;
         public RabbitMQTaskQueueWithId(RabbitMQServiceOptions options, UpdateController updateController)
@@ -36,7 +36,9 @@ namespace Utilities.Messaging.Publisher
         }
         public void Dispose()
         {
+            Console.WriteLine("DONE2");
             _queue.Dispose();
+            GC.SuppressFinalize(this);
         }
 
         public async Task<bool> Push(IQueuedTask task)
@@ -130,6 +132,7 @@ namespace Utilities.Messaging.Publisher
                     _outcomingQueueChannel?.Dispose();
                     _connection.Abort();
                     _connection.Dispose();
+                    Console.WriteLine("DONE");
                 }
                 CancelQueue();
             }
@@ -265,29 +268,35 @@ namespace Utilities.Messaging.Publisher
             private void CancelQueue()
             {
                 _isAvailable = false;
-                _outcomingQueueChannel?.QueuePurge(_outcomingQueueName);
+                try
+                {
+                    _outcomingQueueChannel?.QueuePurge(_outcomingQueueName);    
+                } catch (Exception) {}
 
                 foreach (var response in _queueResponses)
                 {
-                    response.Value.SetCanceled();
+                    response.Value.TrySetCanceled();
                 }
             }
 
             private void ConsumeResponse(object? sender, BasicDeliverEventArgs args)
             {
-                if (_incomingQueueChannel == null)
+                try
                 {
-                    return;
-                }
-                var body = args.Body.ToArray();
-                var bodyString = Encoding.UTF8.GetString(body);
-                var idWrapper = JsonSerializer.Deserialize<IdWrapper>(bodyString);
-                var response = _queueResponses[idWrapper.Id];
-                if (response != null)
-                {
-                    response.SetResult(idWrapper.Body);
-                }
-                _incomingQueueChannel.BasicAck(args.DeliveryTag, false);
+                    if (_incomingQueueChannel == null)
+                    {
+                        return;
+                    }
+                    var body = args.Body.ToArray();
+                    var bodyString = Encoding.UTF8.GetString(body);
+                    var idWrapper = JsonSerializer.Deserialize<IdWrapper>(bodyString);
+                    var response = _queueResponses[idWrapper.Id];
+                    if (response != null)
+                    {
+                        response.TrySetResult(idWrapper.Body);
+                    }
+                    //_incomingQueueChannel.BasicAck(args.DeliveryTag, false);
+                } catch (Exception) {}
             }
 
             private void TerminateOutcomingQueue()
@@ -324,7 +333,7 @@ namespace Utilities.Messaging.Publisher
                 Guid id;
                 do
                 {
-                    id = new Guid();
+                    id = Guid.NewGuid();
                 } while (_queueResponses.ContainsKey(id));
 
                 var body = Encoding.UTF8.GetBytes(new IdWrapper(id, task.SerializeTask()).ToString());

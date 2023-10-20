@@ -38,7 +38,7 @@ namespace UserPagesController.Controllers
             }
             public override string SerializeTask()
             {
-                return JsonSerializer.Serialize(Request);
+                return new TaskMessageWrapper(TaskType.FormCreate, JsonSerializer.Serialize(Request)).ToString();
             }
         }
 

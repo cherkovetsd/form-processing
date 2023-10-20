@@ -22,7 +22,7 @@ namespace UserSideServices.Service
         {
             using (var context = await _formContextFactory.CreateDbContextAsync()) 
             {
-                var model = context.Forms.Where(f => f.State != FormState.UnderEvaluation).Include(f => f.Fields).ToList();
+                var model = context.Forms.Include(f => f.Fields).ToList();
                 var isAllowedForEdit = new Dictionary<string, object>();
                 foreach (var record in model)
                 {
@@ -44,22 +44,20 @@ namespace UserSideServices.Service
             var id = request.Id;
             var timestamp = request.Timestamp;
 
-            using (var context = await _formContextFactory.CreateDbContextAsync())
+            await using var context = await _formContextFactory.CreateDbContextAsync();
+            var formRecord = context.Forms.Where(f => f.Id == id && f.LastUpdated < timestamp).Select(f => f.Fields).FirstOrDefault();
+            if (formRecord == null)
             {
-                var formRecord = context.Forms.Where(f => f.Id == id && f.LastUpdated < timestamp).Select(f => f.Fields).FirstOrDefault();
-                if (formRecord == null)
+                var idExists = await context.Forms.Where(f => f.Id == id).AnyAsync();
+                if (idExists)
                 {
-                    var idExists = await context.Forms.Where(f => f.Id == id).AnyAsync();
-                    if (idExists)
-                    {
-                        return await GetErrorPage("Анкета не найдена");
-                    }
-                    return await GetErrorPage("Состояние анкеты изменилось, перезагрузите страницу");
+                    return await GetErrorPage("Анкета не найдена");
                 }
-                var fieldsForUpdate = formRecord.ConvertForUpdatePage(id, timestamp);
-                var page = await RazorTemplateEngine.RenderAsync("~/Views/UserPages/Edit.cshtml", fieldsForUpdate);
-                return page;
+                return await GetErrorPage("Состояние анкеты изменилось, перезагрузите страницу");
             }
+            var fieldsForUpdate = formRecord.ConvertForUpdatePage(id, timestamp);
+            var page = await RazorTemplateEngine.RenderAsync("~/Views/UserPages/Edit.cshtml", fieldsForUpdate);
+            return page;
         }
 
         public async Task<string> GetErrorPage(string message)

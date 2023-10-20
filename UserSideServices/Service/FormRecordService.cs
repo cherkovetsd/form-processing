@@ -20,26 +20,30 @@ namespace UserSideServices.Service
             _statesAllowedForEdit = options.Value.StatesAllowedToEdit;
         }
 
-        private static async Task<bool> CheckIfCorrectStudent(Context context, string? name, string? group)
+        private static async Task<bool> CheckIfCorrectStudent(Context context, string? name, string? studentGroup, int? id = null)
         {
-            if (name != null && group != null)
+            if (name != null && studentGroup != null)
             {
-                var student = await context.FindAsync<Student>(name);
-                return student != null && student.Group == group;
+                return await context.Students.AnyAsync(s => s.Name == name && s.Group == studentGroup);
             }
-            else if (name != null)
+            else if (name != null && id != null)
             {
-                var student = context.Students.Where(s => s.Name == name && s.Forms.Any())
-                    .Include(s => s.Forms.Where(
-                        f => f.Fields.Group == s.Group));
-                return await student.AnyAsync();
+                var query = from form in context.Forms
+                    where form.Id == id
+                    join student in context.Students on form.Fields.Group equals student.Group
+                    where student.Name == name
+                    select form.Id;
+                return await query.AnyAsync();
             }
-            else if (group != null)
+            else if (studentGroup != null && id != null)
             {
-                var student = context.Students.Where(s => s.Group == group && s.Forms.Any())
-                    .Include(s => s.Forms.Where(
-                        f => f.Fields.Name == s.Name));
-                return await student.AnyAsync();
+                var query = from form in context.Forms
+                    where form.Id == id
+                    join student in context.Students on form.Fields.Name equals student.Name
+                    where student.Group == studentGroup
+                    select form.Id; 
+                
+                return await query.AnyAsync();
             }
             else
             {
@@ -104,7 +108,7 @@ namespace UserSideServices.Service
                     var finalForm = new FormRecord { Name = fields.Name, Fields = fields.ConvertToOptionalDbEntity(), State = resultState, Description = description, LastUpdated = DateTime.UtcNow };
                     context.Forms.Add(finalForm);
                     if (resultState == FormState.ReturnedForRevision 
-                        || context.FormFields.Any(f => f.Name == fields.Name
+                        && context.FormFields.Any(f => f.Name == fields.Name
                                                        && f.Group == fields.Group
                                                        && f.HasConsultant == fields.HasConsultant
                                                        && f.Topic == fields.Topic
@@ -202,7 +206,7 @@ namespace UserSideServices.Service
             await using var context = await _contextFactory.CreateDbContextAsync();
             try
             {
-                if (!await CheckIfCorrectStudent(context, name, group))
+                if (!await CheckIfCorrectStudent(context, name, group, id))
                 {
                     resultState = FormState.ReturnedForRevision;
                     description = "Некорректный студент или группа";

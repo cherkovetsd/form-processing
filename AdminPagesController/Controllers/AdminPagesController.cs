@@ -21,11 +21,11 @@ namespace AdminPagesController.Controllers
         private readonly IAdminPagesService _pagesService;
         private readonly IFormStateService _formService;
 
-        public AdminPagesController(IControllerQueueFactory managerFactory, IAdminPagesService pagesService,
+        public AdminPagesController(IControllerQueueFactory queueFactory, IAdminPagesService pagesService,
             IFormStateService formService)
         {
-            _pageTaskQueueManager = managerFactory.GetPageTaskQueue();
-            _recordTaskQueueManager = managerFactory.GetRecordTaskQueue();
+            _pageTaskQueueManager = queueFactory.GetPageTaskQueue();
+            _recordTaskQueueManager = queueFactory.GetRecordTaskQueue();
             _pagesService = pagesService;
             _formService = formService;
         }

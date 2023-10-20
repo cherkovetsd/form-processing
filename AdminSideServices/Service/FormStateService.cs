@@ -37,16 +37,12 @@ namespace AdminSideServices.Service
                 {
                     return "success";
                 }
-                var isStateAllowed = await context.Forms.Where(f => f.Id == id && f.LastUpdated < createDate && _statesAllowedForEvaluate.Contains(f.State)).AnyAsync();
-                if (!isStateAllowed)
-                {
-                    return "error";
-                }
-                if (await context.Forms.AnyAsync(f => f.Id == id && f.State == state))
+                if (await context.Forms.AnyAsync(f => f.Id == id && f.State == state && _statesAllowedForEvaluate.Contains(f.State)))
                 {
                     return "success";
                 }
-                return "Состояние анкеты изменилось, перезагрузите страницу";
+                var isStateAllowed = await context.Forms.Where(f => f.Id == id && f.LastUpdated < createDate && !_statesAllowedForEvaluate.Contains(f.State)).AnyAsync();
+                return !isStateAllowed ? "error" : "Состояние анкеты изменилось, перезагрузите страницу";
             } 
             catch (Exception) 
             {

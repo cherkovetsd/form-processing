@@ -2,6 +2,8 @@ using Utilities.Updating;
 using DatabaseInfo;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using AdminPagesController.HostedServices;
+using AdminPagesController.HostedServices.Options;
 using AdminSideServices.Options;
 using AdminSideServices.Service;
 using Utilities.Messaging.Publisher.Factory;
@@ -26,6 +28,9 @@ builder.Services.Configure<UpdateControllerOptions>(
 builder.Services.Configure<FormStateServiceOptions>(
     builder.Configuration.GetSection(FormStateServiceOptions.Position));
 
+builder.Services.Configure<EvaluationTimeOptions>(
+    builder.Configuration.GetSection(EvaluationTimeOptions.Position));
+
 builder.Services.AddSingleton<UpdateController>();
 
 builder.Services.AddSingleton<IControllerQueueFactory, RabbitMQQueueFactory>();
@@ -38,6 +43,8 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(opt =>
 {
     opt.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
+
+builder.Services.AddHostedService<UpdateRequestingService>();
 
 var app = builder.Build();
 

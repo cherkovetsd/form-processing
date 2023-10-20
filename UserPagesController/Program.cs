@@ -31,6 +31,8 @@ builder.Services.AddSingleton<IUserPagesService, UserPagesService>();
 
 builder.Services.AddSingleton<IFormRecordService, FormRecordService>();
 
+builder.Services.AddSingleton<UpdateController>();
+
 var app = builder.Build();
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
