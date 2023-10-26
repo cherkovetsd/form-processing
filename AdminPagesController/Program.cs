@@ -22,11 +22,8 @@ builder.Services.Configure<PageTaskQueueOptions>(
 builder.Services.Configure<RecordTaskQueueOptions>(
     builder.Configuration.GetSection(RecordTaskQueueOptions.Position));
 
-builder.Services.Configure<UpdateControllerOptions>(
-    builder.Configuration.GetSection(UpdateControllerOptions.Position));
-
-builder.Services.Configure<FormStateServiceOptions>(
-    builder.Configuration.GetSection(FormStateServiceOptions.Position));
+builder.Services.Configure<EvaluationStateTransitionOptions>(
+    builder.Configuration.GetSection(EvaluationStateTransitionOptions.Position));
 
 builder.Services.Configure<EvaluationTimeOptions>(
     builder.Configuration.GetSection(EvaluationTimeOptions.Position));
@@ -44,7 +41,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(opt =>
     opt.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-builder.Services.AddHostedService<UpdateRequestingService>();
+//builder.Services.AddHostedService<UpdateRequestingService>();
 
 var app = builder.Build();
 

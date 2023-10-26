@@ -1,6 +1,5 @@
 ﻿namespace Utilities.Updating
 {
-    using Microsoft.Extensions.Options;
     using Task = Task;
     public class UpdateController
     {

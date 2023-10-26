@@ -9,16 +9,16 @@ namespace AdminSideServices.Service
 {
     public class FormStateService : IFormStateService
     {
-        private readonly IDbContextFactory<Context> _formContextFactory;
+        private readonly IDbContextFactory<Context> _contextFactory;
         private readonly FormState[] _statesAllowedForEvaluate;
 
-        public FormStateService(IDbContextFactory<Context> formContextFactory, IOptions<FormStateServiceOptions> options)
+        public FormStateService(IDbContextFactory<Context> contextFactory, IOptions<EvaluationStateTransitionOptions> options)
         {
-            _formContextFactory = formContextFactory;
+            _contextFactory = contextFactory;
             _statesAllowedForEvaluate = options.Value.StatesAllowedForEvaluation;
         }
 
-        public async Task<string> SetState(ChangeStateRequest request)
+        public async Task<string> ChangeState(ChangeStateRequest request)
         {
             var id = request.Id;
             var createDate = request.CreateDate;
@@ -26,7 +26,7 @@ namespace AdminSideServices.Service
             
             try
             {
-                await using var context = await _formContextFactory.CreateDbContextAsync();
+                await using var context = await _contextFactory.CreateDbContextAsync();
                 
                 var result = await context.Forms
                     .Where(f => f.Id == id && f.LastUpdated < createDate &&
@@ -37,7 +37,7 @@ namespace AdminSideServices.Service
                 {
                     return "success";
                 }
-                if (await context.Forms.AnyAsync(f => f.Id == id && f.State == state && _statesAllowedForEvaluate.Contains(f.State)))
+                if (await context.Forms.AnyAsync(f => f.Id == id && f.State == state))
                 {
                     return "success";
                 }
@@ -56,7 +56,7 @@ namespace AdminSideServices.Service
             
             try
             {
-                await using var context = await _formContextFactory.CreateDbContextAsync();
+                await using var context = await _contextFactory.CreateDbContextAsync();
                 await context.Forms.Where(f =>
                     f.State == FormState.UnderEvaluation && f.LastUpdated < (DateTime.UtcNow - evaluationTime)).ExecuteUpdateAsync(
                     s =>

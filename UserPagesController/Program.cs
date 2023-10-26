@@ -19,9 +19,6 @@ builder.Services.Configure<PageTaskQueueOptions>(
 builder.Services.Configure<RecordTaskQueueOptions>(
     builder.Configuration.GetSection(RecordTaskQueueOptions.Position));
 
-builder.Services.Configure<UpdateControllerOptions>(
-    builder.Configuration.GetSection(UpdateControllerOptions.Position));
-
 builder.Services.Configure<UpdateStateTransitionOptions>(
     builder.Configuration.GetSection(UpdateStateTransitionOptions.Position));
 

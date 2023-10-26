@@ -73,7 +73,7 @@ public class UpdateRequestingService : BackgroundService, IDisposable
         
             public override string SerializeTask()
             {
-                return new TaskMessageWrapper(TaskType.EvaluationStatusUpdate, JsonSerializer.Serialize(Request))
+                return new RequestMessageWrapper(RequestType.EvaluationStateUpdate, JsonSerializer.Serialize(Request))
                     .ToString();
             }
         }

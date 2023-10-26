@@ -44,7 +44,7 @@ namespace AdminPagesController.Controllers
 
             public override string SerializeTask()
             {
-                return new TaskMessageWrapper(TaskType.FormStateChange, JsonSerializer.Serialize(Request, Options))
+                return new RequestMessageWrapper(RequestType.FormStateChange, JsonSerializer.Serialize(Request, Options))
                     .ToString();
             }
         }
@@ -53,7 +53,7 @@ namespace AdminPagesController.Controllers
         {
             public override string SerializeTask()
             {
-                return new TaskMessageWrapper(TaskType.AdminIndexPage).ToString();
+                return new RequestMessageWrapper(RequestType.AdminIndexPage).ToString();
             }
         }
 
@@ -68,7 +68,7 @@ namespace AdminPagesController.Controllers
 
             public override string SerializeTask()
             {
-                return new TaskMessageWrapper(TaskType.AdminEvaluatePage, JsonSerializer.Serialize(_request))
+                return new RequestMessageWrapper(RequestType.AdminEvaluatePage, JsonSerializer.Serialize(_request))
                     .ToString();
             }
         }
@@ -84,7 +84,7 @@ namespace AdminPagesController.Controllers
 
             public override string SerializeTask()
             {
-                return new TaskMessageWrapper(TaskType.ErrorPage, _message).ToString();
+                return new RequestMessageWrapper(RequestType.ErrorPage, _message).ToString();
             }
         }
 
@@ -143,7 +143,7 @@ namespace AdminPagesController.Controllers
 
             var request = new ChangeStateRequest(id, state, timestamp);
             var task = new EvaluateFormTask(request);
-            var result = await CompleteFormAction(task, _recordTaskQueueManager, () => _formService.SetState(request),
+            var result = await CompleteFormAction(task, _recordTaskQueueManager, () => _formService.ChangeState(request),
                 Index, Error);
             return Redirect("~/AdminPages/Index");
         }

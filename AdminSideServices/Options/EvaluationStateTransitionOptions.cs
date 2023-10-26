@@ -2,7 +2,7 @@
 
 namespace AdminSideServices.Options
 {
-    public class FormStateServiceOptions
+    public class EvaluationStateTransitionOptions
     {
         public const string Position = "StatesAllowedForEvaluation";
 

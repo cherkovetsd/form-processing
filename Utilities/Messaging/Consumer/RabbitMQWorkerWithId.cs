@@ -17,13 +17,13 @@ namespace Utilities.Messaging.Consumer
         private Worker? _worker;
         private readonly UpdateController _updateController;
         private readonly RabbitMQServiceOptions _options;
-        private readonly IEncodedTaskHandler _taskHandler;
+        private readonly IEncodedRequestHandler _requestHandler;
         
         public RabbitMQWorkerWithId(IOptions<RabbitMQWorkerOptions> options, UpdateController updateController,
-            IEncodedTaskHandler taskHandler)
+            IEncodedRequestHandler requestHandler)
         {
             _options = options.Value;
-            _taskHandler = taskHandler;
+            _requestHandler = requestHandler;
             _updateController = updateController;
         }
 
@@ -44,7 +44,7 @@ namespace Utilities.Messaging.Consumer
                         _options.IncomingQueueName ?? throw new ArgumentException(),
                         _options.ContinuationTimeout ?? throw new ArgumentException(),
                         _options.UpdateRateTicks ?? throw new ArgumentException(),
-                        _taskHandler,
+                        _requestHandler,
                         _updateController);
             }
             catch (Exception)
@@ -70,7 +70,7 @@ namespace Utilities.Messaging.Consumer
             private bool _incomingQueueEstablished = false;
             private readonly TimeSpan _continuationTimeout;
             private AsyncEventingBasicConsumer? _consumer = null;
-            private readonly IEncodedTaskHandler _taskHandler;
+            private readonly IEncodedRequestHandler _requestHandler;
             private readonly UpdateController _updateController;
             private bool _connectingInProcess = false;
             
@@ -79,7 +79,7 @@ namespace Utilities.Messaging.Consumer
             private bool _isActive = false;
 
             public Worker(string? hostName, int? port, Uri? uri, string outcomingQueueName, string incomingQueueName,
-                TimeSpan continuationTimeout, int updateRateTicks, IEncodedTaskHandler taskHandler,
+                TimeSpan continuationTimeout, int updateRateTicks, IEncodedRequestHandler requestHandler,
                 UpdateController updateController)
             {
                 _factory = new ConnectionFactory
@@ -107,7 +107,7 @@ namespace Utilities.Messaging.Consumer
                 _outcomingQueueName = outcomingQueueName;
                 _incomingQueueName = incomingQueueName;
                 _continuationTimeout = continuationTimeout;
-                _taskHandler = taskHandler;
+                _requestHandler = requestHandler;
                 _updateController = updateController;
                 _ = AttemptConnecting();
                 
@@ -275,18 +275,18 @@ namespace Utilities.Messaging.Consumer
             {
                 if (_incomingQueueChannel == null || _outcomingQueueChannel == null || !_isActive || !_isAvailable || _isBlocked)
                 {
-                    return;
+                    _incomingQueueChannel?.BasicNack(args.DeliveryTag, false, false);
                 }
 
                 try
                 {
-                    var idWrapper = JsonSerializer.Deserialize<IdWrapper>(Encoding.UTF8.GetString(args.Body.ToArray()));
+                    var idWrapper = IdWrapper.FromJson(Encoding.UTF8.GetString(args.Body.ToArray()));
 
                     Task<string> task;
 
-                    if (await Task.WhenAny(task = _taskHandler.CompleteTask(idWrapper.Body), Task.Delay(_continuationTimeout)) != task)
+                    if (await Task.WhenAny(task = _requestHandler.CompleteRequest(idWrapper.Body), Task.Delay(_continuationTimeout)) != task)
                     {
-                        return;
+                        _incomingQueueChannel?.BasicNack(args.DeliveryTag, false, false);
                     }
 
                     _incomingQueueChannel.BasicAck(args.DeliveryTag, false);
@@ -299,23 +299,6 @@ namespace Utilities.Messaging.Consumer
                                     body: responseBody);
                 }
                 catch (Exception) { }
-            }
-
-            public void UpdateAvailability()
-            {
-                if (!_isActive || !_incomingQueueEstablished || !_outcomingQueueEstablished)
-                {
-                    AttemptConnecting();
-                }
-                if (!_isAvailable && _outcomingQueueChannel != null)
-                {
-                    try
-                    {
-                        _outcomingQueueChannel.BasicGet(_outcomingQueueName, false);
-                        _isAvailable = true;
-                    }
-                    catch (Exception) { }
-                }
             }
 
             public void Update()

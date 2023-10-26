@@ -8,29 +8,31 @@ using static Utilities.Worker.RequestHandlerUtils;
 
 namespace AdminPagesWorker
 {
-    public class AdminPagesEncodedTaskHandler : IEncodedTaskHandler
+    public class AdminPagesEncodedRequestHandler : IEncodedRequestHandler
     {
         private readonly IAdminPagesService _service;
 
-        public AdminPagesEncodedTaskHandler(IAdminPagesService service)
+        public AdminPagesEncodedRequestHandler(IAdminPagesService service)
         {
             _service = service;
         }
 
-        public async Task<string> CompleteTask(string encodedTask)
+        public async Task<string> CompleteRequest(string encodedRequest)
         {
             const string errorMessage = "Некорректное JSON-сообщение";
 
             try
             {
-                var (taskType, message) = TaskMessageWrapper.FromJson(encodedTask);
+                var (taskType, message) = RequestMessageWrapper.FromJson(encodedRequest);
 
                 switch (taskType)
                 {
-                    case TaskType.AdminEvaluatePage:
+                    case RequestType.AdminEvaluatePage:
                         return await HandleJsonRequest<EvaluationPageRequest>(message, errorMessage, _service.GetEvaluationPage);
-                    case TaskType.AdminIndexPage:
+                    case RequestType.AdminIndexPage:
                         return await _service.GetIndexPage();
+                    case RequestType.ErrorPage:
+                        return await _service.GetErrorPage(message ?? "");
                     default:
                         return errorMessage;
                 }

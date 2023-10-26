@@ -15,7 +15,7 @@ namespace UserSideServices.Service
 
         public UserPagesService(IDbContextFactory<Context> formContextFactory, IOptions<UpdateStateTransitionOptions> options) { 
             _formContextFactory = formContextFactory;
-            _statesAllowedForEdit = options.Value.StatesAllowedToEdit;
+            _statesAllowedForEdit = options.Value.StatesAllowedToUpdate;
         }
 
         public async Task<string> GetIndexPage()
@@ -33,7 +33,7 @@ namespace UserSideServices.Service
             }
         }
 
-        public async Task<string> GetCreatePage()
+        public async Task<string> GetAddPage()
         {
             var page = await RazorTemplateEngine.RenderAsync("~/Views/UserPages/Create.cshtml");
             return page;

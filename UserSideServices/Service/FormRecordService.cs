@@ -17,7 +17,7 @@ namespace UserSideServices.Service
         public FormRecordService(IDbContextFactory<Context> contextFactory, IOptions<UpdateStateTransitionOptions> options)
         {
             _contextFactory = contextFactory;
-            _statesAllowedForEdit = options.Value.StatesAllowedToEdit;
+            _statesAllowedForEdit = options.Value.StatesAllowedToUpdate;
         }
 
         private static async Task<bool> CheckIfCorrectStudent(Context context, string? name, string? studentGroup, int? id = null)

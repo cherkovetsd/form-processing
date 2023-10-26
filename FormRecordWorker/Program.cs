@@ -19,10 +19,7 @@ builder.Services.Configure<UpdateStateTransitionOptions>(
 builder.Services.Configure<RabbitMQWorkerOptions>(
     builder.Configuration.GetSection(RabbitMQWorkerOptions.Position));
 
-builder.Services.Configure<UpdateControllerOptions>(
-    builder.Configuration.GetSection(UpdateControllerOptions.Position));
-
-builder.Services.AddSingleton<IEncodedTaskHandler, FormRecordEncodedTaskHandler>();
+builder.Services.AddSingleton<IEncodedRequestHandler, FormRecordEncodedRequestHandler>();
 
 builder.Services.AddSingleton<IFormRecordService, FormRecordService>();
 

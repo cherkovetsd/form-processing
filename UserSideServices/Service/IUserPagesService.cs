@@ -6,7 +6,7 @@ namespace UserSideServices.Service
     {
         public Task<string> GetIndexPage();
 
-        public Task<string> GetCreatePage();
+        public Task<string> GetAddPage();
 
         public Task<string> GetUpdatePage(UpdatePageRequest request);
 

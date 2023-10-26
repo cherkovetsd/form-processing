@@ -307,7 +307,7 @@ namespace Utilities.Messaging.Publisher
                 CancelQueue();
             }
 
-            private async Task ProcessTask(Guid id, IQueuedTask task)
+            private async Task ProcessTaskResponse(Guid id, IQueuedTask task)
             {
                 var taskSource = new TaskCompletionSource<string>();
                 _queueResponses[id] = taskSource;
@@ -345,7 +345,7 @@ namespace Utilities.Messaging.Publisher
                                     body: body);
                     _outcomingQueueChannel.WaitForConfirmsOrDie();
 
-                    _ = ProcessTask(id, task);
+                    _ = ProcessTaskResponse(id, task);
                     
                     return Task.FromResult(true);
                 }

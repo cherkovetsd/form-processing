@@ -1,18 +1,22 @@
-﻿using Data.Models;
+﻿using AdminSideServices.Options;
+using Data.Models;
 using Data.Requests;
 using DatabaseInfo;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Razor.Templating.Core;
 
 namespace AdminSideServices.Service
 {
     public class AdminPagesService : IAdminPagesService
     {
-        private readonly IDbContextFactory<Context> _formContextFactory;
-
-        public AdminPagesService(IDbContextFactory<Context> formContextFactory)
+        private readonly IDbContextFactory<Context> _contextFactory;
+        private readonly FormState[] _statesAllowedForEvaluate;
+        
+        public AdminPagesService(IDbContextFactory<Context> contextFactory, IOptions<EvaluationStateTransitionOptions> options)
         {
-            _formContextFactory = formContextFactory;
+            _contextFactory = contextFactory;
+            _statesAllowedForEvaluate = options.Value.StatesAllowedForEvaluation;
         }
 
         public async Task<string> GetErrorPage(string message)
@@ -26,7 +30,7 @@ namespace AdminSideServices.Service
             var id = request.Id;
             var timestamp = request.Timestamp;
 
-            await using var context = await _formContextFactory.CreateDbContextAsync();
+            await using var context = await _contextFactory.CreateDbContextAsync();
             var form = context.Forms.Where(f => f.Id == id && f.LastUpdated < timestamp).Include(f => f.Fields).FirstOrDefault();
             if (form != null)
             {
@@ -52,8 +56,8 @@ namespace AdminSideServices.Service
 
         public async Task<string> GetIndexPage()
         {
-            await using var context = await _formContextFactory.CreateDbContextAsync();
-            var model = context.Forms.Where(f => f.State == FormState.AwaitingApproval).Include(f => f.Fields);
+            await using var context = await _contextFactory.CreateDbContextAsync();
+            var model = context.Forms.Where(f => _statesAllowedForEvaluate.Contains(f.State)).Include(f => f.Fields);
             var page = await RazorTemplateEngine.RenderAsync("~/Views/AdminPages/Index.cshtml", model);
             return page;
         }

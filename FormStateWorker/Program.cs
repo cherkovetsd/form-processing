@@ -14,11 +14,8 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.Services.AddPooledDbContextFactory<Context>(
     o => o.UseNpgsql(builder.Configuration.GetConnectionString("Connection")).EnableSensitiveDataLogging());
 
-builder.Services.Configure<UpdateControllerOptions>(
-    builder.Configuration.GetSection(UpdateControllerOptions.Position));
-
-builder.Services.Configure<FormStateServiceOptions>(
-    builder.Configuration.GetSection(FormStateServiceOptions.Position));
+builder.Services.Configure<EvaluationStateTransitionOptions>(
+    builder.Configuration.GetSection(EvaluationStateTransitionOptions.Position));
 
 builder.Services.AddSingleton<UpdateController>();
 
@@ -29,7 +26,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Http.Json.JsonOptions>(opt =>
     opt.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
-builder.Services.AddSingleton<IEncodedTaskHandler, FormStateEncodedTaskHandler>();
+builder.Services.AddSingleton<IEncodedRequestHandler, FormStateEncodedRequestHandler>();
 
 builder.Services.Configure<RabbitMQWorkerOptions>(
     builder.Configuration.GetSection(RabbitMQWorkerOptions.Position));

@@ -15,15 +15,15 @@ namespace UserPagesController.Controllers
     public class UserPagesController : Controller
     {
         private const string ContentType = "text/html";
-        private readonly ITaskQueue _pageTaskQueueManager;
-        private readonly ITaskQueue _recordTaskQueueManager;
+        private readonly ITaskQueue _pageTaskQueue;
+        private readonly ITaskQueue _recordTaskQueue;
         private readonly IUserPagesService _pagesService;
         private readonly IFormRecordService _formService;
 
         public UserPagesController(IControllerQueueFactory queueFactory, IUserPagesService pagesService, IFormRecordService formService)
         {
-            _pageTaskQueueManager = queueFactory.GetPageTaskQueue();
-            _recordTaskQueueManager = queueFactory.GetRecordTaskQueue();    
+            _pageTaskQueue = queueFactory.GetPageTaskQueue();
+            _recordTaskQueue = queueFactory.GetRecordTaskQueue();    
             _pagesService = pagesService;
             _formService = formService;
         }
@@ -38,7 +38,7 @@ namespace UserPagesController.Controllers
             }
             public override string SerializeTask()
             {
-                return new TaskMessageWrapper(TaskType.FormCreate, JsonSerializer.Serialize(Request)).ToString();
+                return new RequestMessageWrapper(RequestType.FormAdd, JsonSerializer.Serialize(Request)).ToString();
             }
         }
 
@@ -54,7 +54,7 @@ namespace UserPagesController.Controllers
             }
             public override string SerializeTask()
             {
-                return new TaskMessageWrapper(TaskType.FormUpdate, JsonSerializer.Serialize(Request, options)).ToString();
+                return new RequestMessageWrapper(RequestType.FormUpdate, JsonSerializer.Serialize(Request, options)).ToString();
             }
         }
 
@@ -62,7 +62,7 @@ namespace UserPagesController.Controllers
         {
             public override string SerializeTask()
             {
-                return new TaskMessageWrapper(TaskType.UserIndexPage).ToString();
+                return new RequestMessageWrapper(RequestType.UserIndexPage).ToString();
             }
         }
 
@@ -70,7 +70,7 @@ namespace UserPagesController.Controllers
         {
             public override string SerializeTask()
             {
-                return new TaskMessageWrapper(TaskType.UserCreatePage).ToString();
+                return new RequestMessageWrapper(RequestType.UserAddPage).ToString();
             }
         }
 
@@ -85,7 +85,7 @@ namespace UserPagesController.Controllers
 
             public override string SerializeTask()
             {
-                return new TaskMessageWrapper(TaskType.UserUpdatePage, JsonSerializer.Serialize(_request)).ToString();
+                return new RequestMessageWrapper(RequestType.UserUpdatePage, JsonSerializer.Serialize(_request)).ToString();
             }
         }
 
@@ -100,7 +100,7 @@ namespace UserPagesController.Controllers
 
             public override string SerializeTask()
             {
-                return new TaskMessageWrapper(TaskType.ErrorPage, _message).ToString();
+                return new RequestMessageWrapper(RequestType.ErrorPage, _message).ToString();
             }
         }
 
@@ -112,12 +112,12 @@ namespace UserPagesController.Controllers
 
         public async Task<IActionResult> Index()
         {
-            return await GetPage(new GetIndexPageTask(), _pageTaskQueueManager, _pagesService.GetIndexPage);
+            return await GetPage(new GetIndexPageTask(), _pageTaskQueue, _pagesService.GetIndexPage);
         }
 
         public async Task<IActionResult> Create()
         {
-            return await GetPage(new GetCreatePageTask(), _pageTaskQueueManager, _pagesService.GetCreatePage);
+            return await GetPage(new GetCreatePageTask(), _pageTaskQueue, _pagesService.GetAddPage);
         }
 
         public async Task<IActionResult> Edit(int? id, [FromBody] DateTime? createDate=null)
@@ -132,21 +132,21 @@ namespace UserPagesController.Controllers
             }
             var request = new UpdatePageRequest((int)id, (DateTime)createDate);
 
-            return await GetPage(new GetUpdatePageTask(request), _pageTaskQueueManager, () => _pagesService.GetUpdatePage(request));
+            return await GetPage(new GetUpdatePageTask(request), _pageTaskQueue, () => _pagesService.GetUpdatePage(request));
         }
 
         public async Task<IActionResult> Error(string message)
         {
-            return await GetPage(new GetErrorPageTask(message), _pageTaskQueueManager, () => _pagesService.GetErrorPage(message));
+            return await GetPage(new GetErrorPageTask(message), _pageTaskQueue, () => _pagesService.GetErrorPage(message));
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([Bind("Name,Group,Topic,Company,HasConsultant")] FormFields formFields)
+        public async Task<IActionResult> Create([Bind("Name,Group,Topic,Company,HasConsultant")] FormFields fields)
         {
             if (ModelState.IsValid)
             {
-                var request = new AddFormRequest(formFields, DateTime.Now);
-                return await CompleteFormAction(new AddFormTask(request), _recordTaskQueueManager, ()=> _formService.AddRecord(request), Index, Error);
+                var request = new AddFormRequest(fields, DateTime.Now);
+                return await CompleteFormAction(new AddFormTask(request), _recordTaskQueue, ()=> _formService.AddRecord(request), Index, Error);
             }
             return Redirect("~/UserPages/Create");
         }
@@ -158,7 +158,7 @@ namespace UserPagesController.Controllers
             {
                 var request = new UpdateFormRequest(fields);
                 var task = new UpdateFormTask(request);
-                var result = await CompleteFormAction(task, _recordTaskQueueManager, () => _formService.UpdateRecord(request), Index, Error);
+                var result = await CompleteFormAction(task, _recordTaskQueue, () => _formService.UpdateRecord(request), Index, Error);
                 return Redirect("~/UserPages/Index");
             }
             return Redirect("~/UserPages/Edit/" + fields.Id);

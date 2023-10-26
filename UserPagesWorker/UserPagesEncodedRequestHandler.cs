@@ -7,31 +7,33 @@ using static Utilities.Worker.RequestHandlerUtils;
 
 namespace UserPagesWorker
 {
-    public class UserPagesEncodedTaskHandler : IEncodedTaskHandler
+    public class UserPagesEncodedRequestHandler : IEncodedRequestHandler
     {
         private readonly IUserPagesService _service;
 
-        public UserPagesEncodedTaskHandler(IUserPagesService service)
+        public UserPagesEncodedRequestHandler(IUserPagesService service)
         {
             _service = service;
         }
 
-        public async Task<string> CompleteTask(string encodedTask)
+        public async Task<string> CompleteRequest(string encodedRequest)
         {
             const string errorMessage = "Некорректное JSON-сообщение";
 
             try
             {
-                var (taskType, message) = TaskMessageWrapper.FromJson(encodedTask);
+                var (taskType, message) = RequestMessageWrapper.FromJson(encodedRequest);
 
                 switch (taskType)
                 {
-                    case TaskType.UserCreatePage:
-                        return await _service.GetCreatePage();
-                    case TaskType.UserUpdatePage:
+                    case RequestType.UserAddPage:
+                        return await _service.GetAddPage();
+                    case RequestType.UserUpdatePage:
                         return await HandleJsonRequest<UpdatePageRequest>(message, errorMessage, _service.GetUpdatePage);
-                    case TaskType.UserIndexPage:
+                    case RequestType.UserIndexPage:
                         return await _service.GetIndexPage();
+                    case RequestType.ErrorPage:
+                        return await _service.GetErrorPage(message ?? "");
                     default:
                         return errorMessage;
                 }

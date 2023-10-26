@@ -7,29 +7,29 @@ using static Utilities.Worker.RequestHandlerUtils;
 
 namespace FormRecordWorker
 {
-    public class FormRecordEncodedTaskHandler : IEncodedTaskHandler
+    public class FormRecordEncodedRequestHandler : IEncodedRequestHandler
     {
         private readonly IFormRecordService _service;
 
-        public FormRecordEncodedTaskHandler(IFormRecordService service)
+        public FormRecordEncodedRequestHandler(IFormRecordService service)
         {
             _service = service;
         }
 
-        public async Task<string> CompleteTask(string encodedTask)
+        public async Task<string> CompleteRequest(string encodedRequest)
         {
             string errorMessage = "Некорректное JSON-сообщение";
 
             try
             {
-                var taskWrapper = TaskMessageWrapper.FromJson(encodedTask);
+                var taskWrapper = RequestMessageWrapper.FromJson(encodedRequest);
                 var message = taskWrapper.Message;
 
                 switch (taskWrapper.Type)
                 {
-                    case TaskType.FormCreate:
+                    case RequestType.FormAdd:
                         return await HandleJsonRequest<AddFormRequest>(message, errorMessage, _service.AddRecord);
-                    case TaskType.FormUpdate:
+                    case RequestType.FormUpdate:
                         return await HandleJsonRequest<UpdateFormRequest>(message, errorMessage, _service.UpdateRecord);
                     default:
                         return errorMessage;

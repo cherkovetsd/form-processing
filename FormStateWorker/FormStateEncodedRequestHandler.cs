@@ -7,29 +7,29 @@ using static Utilities.Worker.RequestHandlerUtils;
 
 namespace FormStateWorker
 {
-    public class FormStateEncodedTaskHandler : IEncodedTaskHandler
+    public class FormStateEncodedRequestHandler : IEncodedRequestHandler
     {
         private readonly IFormStateService _service;
 
-        public FormStateEncodedTaskHandler(IFormStateService service)
+        public FormStateEncodedRequestHandler(IFormStateService service)
         {
             _service = service;
         }
 
-        public async Task<string> CompleteTask(string encodedTask)
+        public async Task<string> CompleteRequest(string encodedRequest)
         {
             const string errorMessage = "Некорректное JSON-сообщение";
 
             try
             {
-                var taskWrapper = TaskMessageWrapper.FromJson(encodedTask);
+                var taskWrapper = RequestMessageWrapper.FromJson(encodedRequest);
                 var message = taskWrapper.Message;
 
                 switch (taskWrapper.Type)
                 {
-                    case TaskType.FormStateChange:
-                        return await HandleJsonRequest<ChangeStateRequest>(message, errorMessage, _service.SetState);
-                    case TaskType.EvaluationStatusUpdate:
+                    case RequestType.FormStateChange:
+                        return await HandleJsonRequest<ChangeStateRequest>(message, errorMessage, _service.ChangeState);
+                    case RequestType.EvaluationStateUpdate:
                         return await HandleJsonRequest<EvaluationStateUpdateRequest>(message, errorMessage,
                             _service.UpdateEvaluationState);
                     default:

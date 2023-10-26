@@ -1,16 +1,16 @@
 ﻿namespace Data.Tasks
 {
-    public enum TaskType
+    public enum RequestType
     {
         UserIndexPage,
-        UserCreatePage,
+        UserAddPage,
         UserUpdatePage,
         AdminIndexPage,
         AdminEvaluatePage,
         ErrorPage,
-        FormCreate,
+        FormAdd,
         FormUpdate,
         FormStateChange,
-        EvaluationStatusUpdate
+        EvaluationStateUpdate
     }
 }

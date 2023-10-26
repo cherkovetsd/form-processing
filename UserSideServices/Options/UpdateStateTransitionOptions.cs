@@ -6,6 +6,6 @@ namespace UserSideServices.Options
     {
         public const string Position = "StatesAllowedToEdit";
 
-        public FormState[] StatesAllowedToEdit { get; set; } = Array.Empty<FormState>();
+        public FormState[] StatesAllowedToUpdate { get; set; } = Array.Empty<FormState>();
     }
 }
