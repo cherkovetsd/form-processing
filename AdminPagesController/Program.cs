@@ -6,13 +6,18 @@ using AdminPagesController.HostedServices;
 using AdminPagesController.HostedServices.Options;
 using AdminSideServices.Options;
 using AdminSideServices.Service;
+using Npgsql;
 using Utilities.Messaging.Publisher.Factory;
 using Utilities.Messaging.Publisher.Factory.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var conStrBuilder = new NpgsqlConnectionStringBuilder(builder.Configuration.GetConnectionString("Connection"))
+    {
+        Password = builder.Configuration["DbPassword"]
+    };
 builder.Services.AddPooledDbContextFactory<Context>(
-    o => o.UseNpgsql(builder.Configuration.GetConnectionString("Connection")).EnableSensitiveDataLogging());
+    o => o.UseNpgsql(conStrBuilder.ConnectionString).EnableSensitiveDataLogging());
 
 builder.Services.AddControllers();
 
@@ -50,7 +55,7 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Home/Error");
+    app.UseExceptionHandler("/AdminPages/Error");
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }

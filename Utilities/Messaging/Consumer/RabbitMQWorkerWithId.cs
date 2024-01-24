@@ -263,7 +263,6 @@ namespace Utilities.Messaging.Consumer
                         }
                     }
                 }
-                catch (Exception) {}
                 finally
                 {
                     _connectingInProcess = false;
@@ -289,7 +288,7 @@ namespace Utilities.Messaging.Consumer
                         _incomingQueueChannel?.BasicNack(args.DeliveryTag, false, false);
                     }
 
-                    _incomingQueueChannel.BasicAck(args.DeliveryTag, false);
+                    _incomingQueueChannel?.BasicAck(args.DeliveryTag, false);
 
                     var responseBody = Encoding.UTF8.GetBytes(new IdWrapper(idWrapper.Id, task.Result).ToString());
 

@@ -38,19 +38,19 @@ namespace DatabaseInfo
                 .HasKey(c => c.Name);
         }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        /*protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
-                optionsBuilder.UseNpgsql("Server=dpg-ck5d1nmg2bec738cqgf0-a.oregon-postgres.render.com;Port=5432;Database=db_ix7c;User Id=user;Password=FWvALG9UcftQkqwsLZdzZggNll32W9JX;: null,: null,: null,: null,");
+                optionsBuilder.UseNpgsql("Server=dpg-cmnu2imd3nmc739h84h0-a.frankfurt-postgres.render.com;Port=5432;Database=summer_project_bd_byde;User Id=user;Password=xynG5n9OygPsORJds4LTAidWVMObA8nv");
                 optionsBuilder.EnableSensitiveDataLogging();
             }
-        }
+        }*/
 
-        public DbSet<FormRecord> Forms { get; set; } = default!;
+        public virtual DbSet<FormRecord> Forms { get; set; } = default!;
 
-        public DbSet<FormFieldsOptionalDbEntity> FormFields { get; set; } = default!;
+        public virtual DbSet<FormFieldsOptionalDbEntity> FormFields { get; set; } = default!;
 
-        public DbSet<Student> Students { get; set; } = default!;
+        public virtual DbSet<Student> Students { get; set; } = default!;
     }
 }

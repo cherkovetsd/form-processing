@@ -1,5 +1,6 @@
 ﻿using DatabaseInfo;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using UserSideServices.Options;
 using UserSideServices.Service;
 using Utilities.Messaging.Publisher.Factory;
@@ -8,8 +9,12 @@ using Utilities.Updating;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var conStrBuilder = new NpgsqlConnectionStringBuilder(builder.Configuration.GetConnectionString("Connection"))
+{
+    Password = builder.Configuration["DbPassword"]
+};
 builder.Services.AddPooledDbContextFactory<Context>(
-    o => o.UseNpgsql(builder.Configuration.GetConnectionString("Connection")).EnableSensitiveDataLogging());
+    o => o.UseNpgsql(conStrBuilder.ConnectionString).EnableSensitiveDataLogging());
 
 builder.Services.AddControllers();
 

@@ -5,14 +5,19 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
 using AdminSideServices.Service;
 using FormStateWorker;
+using Npgsql;
 using Utilities.Worker;
 using Utilities.Messaging.Consumer.Options;
 using Utilities.Messaging.Consumer;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+var conStrBuilder = new NpgsqlConnectionStringBuilder(builder.Configuration.GetConnectionString("Connection"))
+{
+    Password = builder.Configuration["DbPassword"]
+};
 builder.Services.AddPooledDbContextFactory<Context>(
-    o => o.UseNpgsql(builder.Configuration.GetConnectionString("Connection")).EnableSensitiveDataLogging());
+    o => o.UseNpgsql(conStrBuilder.ConnectionString).EnableSensitiveDataLogging());
 
 builder.Services.Configure<EvaluationStateTransitionOptions>(
     builder.Configuration.GetSection(EvaluationStateTransitionOptions.Position));

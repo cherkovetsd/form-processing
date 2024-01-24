@@ -1,0 +1,106 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672'
+    networks:
+      - my-net
+  adminpagescontroller:
+    image: adminpagescontroller
+    container_name: adminpagescontroller
+    depends_on:
+      - rabbitmq
+      - adminpagesworker
+      - formstateworker
+    build:
+      dockerfile: AdminPagesController/Dockerfile
+    ports:
+      - '8000:443'
+    networks:
+      - my-net
+    environment:
+      - ASPNETCORE_HTTPS_PORTS=443
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - $appdata\microsoft\UserSecrets\:/root/.microsoft/usersecrets
+      - $USERPROFILE\.aspnet\https:/root/.aspnet/https/
+  userpagescontroller:
+    image: userpagescontroller
+    container_name: userpagescontroller
+    depends_on:
+      - rabbitmq
+      - userpagesworker
+      - formrecordworker
+    build:
+      dockerfile: UserPagesController/Dockerfile
+    ports:
+      - '8001:443'
+    networks:
+      - my-net
+    environment:
+      - ASPNETCORE_HTTPS_PORTS=443
+      - ASPNETCORE_ENVIRONMENT=Development
+    volumes:
+      - $appdata\microsoft\UserSecrets\:/root/.microsoft/usersecrets
+      - $USERPROFILE\.aspnet\https:/root/.aspnet/https/
+  adminpagesworker:
+    image: adminpagesworker
+    depends_on:
+      - rabbitmq
+    build:
+      dockerfile: AdminPagesWorker/Dockerfile
+    networks:
+      - my-net
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+    volumes:
+      - $appdata\microsoft\UserSecrets\:/root/.microsoft/usersecrets
+    deploy:
+      mode: replicated
+      replicas: 2
+  userpagesworker:
+    image: userpagesworker
+    depends_on:
+      - rabbitmq
+    build:
+      dockerfile: UserPagesWorker/Dockerfile
+    networks:
+      - my-net
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+    volumes:
+      - $appdata\microsoft\UserSecrets\:/root/.microsoft/usersecrets
+    deploy:
+      mode: replicated
+      replicas: 2
+  formstateworker:
+    image: formstateworker
+    depends_on:
+      - rabbitmq
+    build:
+      dockerfile: FormStateWorker/Dockerfile
+    networks:
+      - my-net
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+    volumes:
+      - $appdata\microsoft\UserSecrets\:/root/.microsoft/usersecrets
+  formrecordworker:
+    image: formrecordworker
+    depends_on:
+      - rabbitmq
+    build:
+      dockerfile: FormRecordWorker/Dockerfile
+    networks:
+      - my-net
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+    volumes:
+      - $appdata\microsoft\UserSecrets\:/root/.microsoft/usersecrets
+    deploy:
+      mode: replicated
+      replicas: 2
+networks:
+  my-net:
